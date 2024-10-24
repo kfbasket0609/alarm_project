@@ -12,7 +12,8 @@ class Model {
   int ? id;
   int ? milliseconds;
 
-
+  // コンストラクタの定義
+  // required -> null 不可
   Model({
     required this.label,
     required this.dateTime,
@@ -22,6 +23,7 @@ class Model {
     required this.milliseconds
   });
 
+  // 通常のコンストラクタより複雑な定義ができる
   factory Model.fromJson(Map<String, dynamic> json) => Model(
     label: json["label"],
     dateTime: json["dateTime"],
