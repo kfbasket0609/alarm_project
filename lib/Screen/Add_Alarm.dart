@@ -1,5 +1,4 @@
 import 'dart:math';
-
 import 'package:alarm_project/Provider/Provider.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,110 +13,226 @@ class AddAlarm extends StatefulWidget {
 }
 
 class _AddAlaramState extends State<AddAlarm> {
-  late TextEditingController controller;
+  late TextEditingController titleController;
+  late TextEditingController locationController;
+  late TextEditingController memoController;
 
   String? dateTime;
   bool repeat = false;
-
+  String? notificationSound = "デフォルト1";
+  String? notificationImage = "なし";
   DateTime? notificationtime;
-
   String? name = "none";
-  int ? Milliseconds;
+  int? milliseconds;
 
   @override
   void initState() {
-    controller = TextEditingController();
+    titleController = TextEditingController();
+    locationController = TextEditingController();
+    memoController = TextEditingController();
     context.read<alarmprovider>().GetData();
     super.initState();
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      alignment: Alignment.centerLeft,
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Colors.grey,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListTile({
+    required String title,
+    String? subtitle,
+    Widget? trailing,
+    VoidCallback? onTap,
+    Widget? leading,
+  }) {
+    return ListTile(
+      leading: leading,
+      title: Text(title),
+      subtitle: subtitle != null ? Text(subtitle) : null,
+      trailing: trailing ?? const Icon(Icons.chevron_right),
+      onTap: onTap,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(Icons.check),
-          )
-        ],
-        automaticallyImplyLeading: true,
-        title: const Text(
-          'Add Alarm',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => Navigator.pop(context),
         ),
-        centerTitle: true,
+        actions: [
+          TextButton(
+            onPressed: () {
+              Random random = Random();
+              int randomNumber = random.nextInt(100);
+
+              context.read<alarmprovider>().SetAlaram(
+                  titleController.text,
+                  dateTime!,
+                  true,
+                  name!,
+                  randomNumber,
+                  milliseconds!
+              );
+              context.read<alarmprovider>().SetData();
+              context.read<alarmprovider>()
+                  .SecduleNotification(notificationtime!, randomNumber);
+              Navigator.pop(context);
+            },
+            child: const Text('追加'),
+          ),
+        ],
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.center,
+      body: ListView(
         children: [
+          // タイトルセクション
+          _buildSectionHeader('タイトル'),
           Container(
-            height: MediaQuery.of(context).size.height * 0.3,
-            width: MediaQuery.of(context).size.width,
-            child: Center(
-                child: CupertinoDatePicker(
-                  showDayOfWeek: true,
-                  minimumDate: DateTime.now(),
-                  dateOrder: DatePickerDateOrder.dmy,
-                  onDateTimeChanged: (va) {
-                    dateTime = DateFormat().add_jms().format(va);
-
-                    Milliseconds = va.microsecondsSinceEpoch;
-
-                    notificationtime = va;
-
-                    print(dateTime);
-                  },
-                )),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Container(
-                width: MediaQuery.of(context).size.width,
-                child: CupertinoTextField(
-                  placeholder: "Add Label",
-                  controller: controller,
-                )),
-          ),
-          Row(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(" Repeat daily"),
+            color: Colors.white,
+            child: TextField(
+              controller: titleController,
+              decoration: const InputDecoration(
+                hintText: 'スケジュールの内容を入力',
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: InputBorder.none,
               ),
-              CupertinoSwitch(
-                value: repeat,
-                onChanged: (bool value) {
-                  repeat = value;
-
-                  if (repeat == false) {
-                    name = "none";
-                  } else {
-                    name = "Everyday";
-                  }
-
-                  setState(() {});
-                },
-              ),
-            ],
+            ),
           ),
-          ElevatedButton(
-              onPressed: () {
-                Random random = new Random();
-                int randomNumber = random.nextInt(100);
-                // null可能にするかどうか
-                context.read<alarmprovider>().SetAlaram(
-                    controller.text, dateTime!, true, name!, randomNumber,Milliseconds!);
-                context.read<alarmprovider>().SetData();
 
-                context
-                    .read<alarmprovider>()
-                    .SecduleNotification(notificationtime!, randomNumber);
-
-                Navigator.pop(context);
+          // 日時セクション
+          _buildSectionHeader('開始'),
+          Container(
+            color: Colors.white,
+            child: _buildListTile(
+              title: dateTime ?? DateFormat('MM月dd日 HH:mm').format(DateTime.now()),
+              onTap: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) => Container(
+                    height: 300,
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.dateAndTime,
+                      onDateTimeChanged: (value) {
+                        setState(() {
+                          dateTime = DateFormat('MM月dd日 HH:mm').format(value);
+                          notificationtime = value;
+                          milliseconds = value.millisecondsSinceEpoch;
+                        });
+                      },
+                    ),
+                  ),
+                );
               },
-              child: const Text("Set Alaram")),
+            ),
+          ),
+
+          // 場所セクション
+          _buildSectionHeader('場所'),
+          Container(
+            color: Colors.white,
+            child: TextField(
+              controller: locationController,
+              decoration: const InputDecoration(
+                hintText: '場所を入力',
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+
+          // 通知設定セクション
+          _buildSectionHeader('通知設定'),
+          Container(
+            color: Colors.white,
+            child: Column(
+              children: [
+                _buildListTile(
+                  title: '繰り返し',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(repeat ? 'Everyday' : 'なし'),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                  onTap: () {
+                    setState(() {
+                      repeat = !repeat;
+                      name = repeat ? 'Everyday' : 'none';
+                    });
+                  },
+                ),
+                const Divider(height: 1),
+                _buildListTile(
+                  title: 'リマインド',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('なし'),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                _buildListTile(
+                  title: '通知音',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(notificationSound!),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                _buildListTile(
+                  title: '通知画像',
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(notificationImage!),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.chevron_right),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // メモセクション
+          _buildSectionHeader('メモ'),
+          Container(
+            color: Colors.white,
+            child: TextField(
+              controller: memoController,
+              maxLines: 4,
+              decoration: const InputDecoration(
+                hintText: 'メモを入力',
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: InputBorder.none,
+              ),
+            ),
+          ),
         ],
       ),
     );
