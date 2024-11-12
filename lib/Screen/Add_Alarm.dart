@@ -34,6 +34,7 @@ class _AddAlaramState extends State<AddAlarm> {
     super.initState();
   }
 
+  // ウィジットの定義
   Widget _buildSectionHeader(String title) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -41,9 +42,9 @@ class _AddAlaramState extends State<AddAlarm> {
       child: Text(
         title,
         style: const TextStyle(
-          fontSize: 13,
+          fontSize: 28,
           fontWeight: FontWeight.w500,
-          color: Colors.grey,
+          color: Colors.blue,
         ),
       ),
     );
@@ -58,8 +59,19 @@ class _AddAlaramState extends State<AddAlarm> {
   }) {
     return ListTile(
       leading: leading,
-      title: Text(title),
-      subtitle: subtitle != null ? Text(subtitle) : null,
+      title: Text(
+          title,
+          style: const TextStyle(
+          fontSize: 24
+      ),
+      ),
+      subtitle: subtitle != null
+          ? Text(
+        subtitle,
+        style: const TextStyle(
+          fontSize: 20
+        )
+      ) : null,
       trailing: trailing ?? const Icon(Icons.chevron_right),
       onTap: onTap,
     );
@@ -81,12 +93,18 @@ class _AddAlaramState extends State<AddAlarm> {
               int randomNumber = random.nextInt(100);
 
               context.read<alarmprovider>().SetAlaram(
-                  titleController.text,
-                  dateTime!,
-                  true,
-                  name!,
-                  randomNumber,
-                  milliseconds!
+                titleController.text, // label
+                dateTime!,            // dateTime
+                true,                 // check
+                name!,                // repeat
+                randomNumber,         // id
+                milliseconds!,        // milliseconds
+                titleController.text, // title
+                locationController.text, // location
+                memoController.text,  // memo
+                notificationSound!,   // notificationSound
+                notificationImage!,   // notificationImage
+                [],                   // repeatDays
               );
               context.read<alarmprovider>().SetData();
               context.read<alarmprovider>()

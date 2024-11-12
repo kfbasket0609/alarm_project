@@ -100,6 +100,7 @@ class _MyAppState extends State<MyApp> {
                 ),
             ),
           ),
+          // アラーム設定部分
           Consumer<alarmprovider>(
               builder: (context, alarm, child) {
             return Container(
@@ -156,6 +157,7 @@ class _MyAppState extends State<MyApp> {
                   }),
             );
               }),
+          // フッター
           Container(
             height: MediaQuery.of(context).size.height * 0.1,
             decoration: const BoxDecoration(
@@ -163,6 +165,7 @@ class _MyAppState extends State<MyApp> {
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30)),
                 color: Colors.deepPurpleAccent),
+            // プラスボタン
             child: Center(
                 child: GestureDetector(
                   onTap: () {

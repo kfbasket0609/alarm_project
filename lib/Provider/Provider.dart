@@ -28,21 +28,30 @@ class alarmprovider extends ChangeNotifier{
   late BuildContext context;
 
   // alarmをmodelistに追加するメゾット
-  SetAlaram(String label,String dateTime,bool check,String repeat,int id,int milliseconds){
+  SetAlaram(String label,String dateTime,bool check,String repeat,int id,int milliseconds,String title, String location, String memo, String notificationSound, String notificationImage, List<String> repeatDays,){
 
-    modelist.add(Model(label: label, dateTime: dateTime, check: check, when: repeat,id: id,milliseconds: milliseconds));
+    modelist.add(Model(
+      label: label,
+      dateTime: dateTime,
+      check: check,
+      when: repeat,
+      id: id,
+      milliseconds: milliseconds,
+      title: title,
+      location: location,
+      memo:memo,
+      notificationSound: notificationSound,
+      notificationImage: notificationImage,
+      repeatDays: repeatDays,
+    ));
     notifyListeners();
-
-
   }
 
 
   // alarmのオンオフを切り替える(check状態)
   EditSwitch(int index,bool check){
-
     modelist[index].check=check;
     notifyListeners();
-
   }
 
 
@@ -146,22 +155,10 @@ class alarmprovider extends ChangeNotifier{
         tz.TZDateTime.now(tz.local).add( Duration(milliseconds: newtime)),
 
         NotificationDetails(
-            android: AndroidNotificationDetails(
-                'your channel id', 'your channel name',
-                channelDescription: 'your channel description',
-
-                sound: RawResourceAndroidNotificationSound("alarm"),
-                autoCancel: false,
-                playSound: true,
-                priority: Priority.max
-
-
-            ),
           iOS: DarwinNotificationDetails(
             sound: sound,
           )
         ),
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         uiLocalNotificationDateInterpretation:
         UILocalNotificationDateInterpretation.absoluteTime);
   }
