@@ -59,127 +59,161 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery
+        .of(context)
+        .size
+        .width;
+    final double screenHeight = MediaQuery
+        .of(context)
+        .size
+        .height;
+    final double scalingFactor = screenWidth / 1000;
+
     return Scaffold(
       backgroundColor: Color(0xFFEEEFF5),
       appBar: AppBar(
         backgroundColor: Colors.deepPurpleAccent,
-        actions: const [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(
-              Icons.menu,
-              color: Colors.white,
-            ),
-          )
-        ],
-        title: const Text(
-          'Alarm Clock ',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          'Alarm Clock',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 60 * scalingFactor,
+          ),
         ),
         centerTitle: true,
       ),
-      body: ListView(
+      body: Column(
         children: [
+          // 上部の時刻表示コンテナ
           Container(
             decoration: const BoxDecoration(
-                color: Colors.deepPurpleAccent,
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30)
-                ),
+              color: Colors.deepPurpleAccent,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(30),
+                bottomRight: Radius.circular(30),
+              ),
             ),
-            height: MediaQuery.of(context).size.height * 0.1,
+            height: screenHeight * 0.1,
             child: Center(
-                child: Text(
-                  DateFormat.yMEd().add_jms().format(DateTime.now(),),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white
-                  ),
+              child: Text(
+                DateFormat.yMEd().add_jms().format(DateTime.now()),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 40 * scalingFactor,
+                  color: Colors.white,
                 ),
+              ),
             ),
           ),
-          // アラーム設定部分
-          Consumer<alarmprovider>(
+          // リスト部分
+          Expanded(
+            child: Consumer<alarmprovider>(
               builder: (context, alarm, child) {
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: ListView.builder(
+                return ListView.builder(
                   itemCount: alarm.modelist.length,
-                  itemBuilder: (BuildContext, index) {
+                  itemBuilder: (BuildContext context, int index) {
                     return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          height: MediaQuery.of(context).size.height * 0.1,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          alarm.modelist[index].dateTime!,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: Colors.black),
+                      padding: EdgeInsets.all(8.0 * scalingFactor),
+                      child: Container(
+                        height: screenHeight * 0.15, // 固定の高さを設定
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(
+                              10 * scalingFactor),
+                          color: Colors.white,
+                        ),
+                        child: Padding(
+                          padding: EdgeInsets.all(8.0 * scalingFactor),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment
+                                    .spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        alarm.modelist[index].dateTime!,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 24 * scalingFactor,
+                                          color: Colors.black,
                                         ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 8.0),
-                                          child: Text("| + ${alarm.modelist[index].label}"),
+                                      ),
+                                      Padding(
+                                        padding: EdgeInsets.only(
+                                            left: 8.0 * scalingFactor),
+                                        child: Text(
+                                          "| + ${alarm.modelist[index].label}",
+                                          style: TextStyle(
+                                              fontSize: 18 * scalingFactor),
                                         ),
-                                      ],
-                                    ),
-                                    CupertinoSwitch(
-                                        value:(alarm.modelist[index].milliseconds! < DateTime.now().millisecondsSinceEpoch)? false:alarm.modelist[index].check,
-                                        onChanged: (v) {
-                                          alarm.EditSwitch(index, v);
-                                          alarm.CancelNotification(alarm.modelist[index].id!);
-                                        }),
-                                  ],
+                                      ),
+                                    ],
+                                  ),
+                                  CupertinoSwitch(
+                                    value: alarm.modelist[index]
+                                        .milliseconds! >=
+                                        DateTime
+                                            .now()
+                                            .millisecondsSinceEpoch
+                                        ? alarm.modelist[index].check
+                                        : false,
+                                    onChanged: (v) {
+                                      alarm.EditSwitch(index, v);
+                                      alarm.CancelNotification(
+                                          alarm.modelist[index].id!);
+                                    },
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                alarm.modelist[index].when!,
+                                style: TextStyle(
+                                  fontSize: 18 * scalingFactor,
                                 ),
-                                Text(alarm.modelist[index].when!)
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ));
-                  }),
-            );
-              }),
-          // フッター
-          Container(
-            height: MediaQuery.of(context).size.height * 0.1,
-            decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30)),
-                color: Colors.deepPurpleAccent),
-            // プラスボタン
-            child: Center(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => AddAlarm()));
+                        ),
+                      ),
+                    );
                   },
-                  child: Container(
-                      decoration: const BoxDecoration(
-                          color: Colors.white, shape: BoxShape.circle),
-                      child: const Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Icon(Icons.add),
-                      )),
-                )),
+                );
+              },
+            ),
+          ),
+          // 下部のコンテナ
+          Container(
+            height: screenHeight * 0.1,
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(30),
+                topRight: Radius.circular(30),
+              ),
+              color: Colors.deepPurpleAccent,
+            ),
+            child: Center(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => AddAlarm()),
+                  );
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Padding(
+                    padding: EdgeInsets.all(12.0 * scalingFactor),
+                    child: Icon(Icons.add),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),

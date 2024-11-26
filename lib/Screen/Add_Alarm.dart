@@ -139,23 +139,48 @@ class _AddAlaramState extends State<AddAlarm> {
             color: Colors.white,
             child: _buildListTile(
               title: dateTime ?? DateFormat('MM月dd日 HH:mm').format(DateTime.now()),
-              onTap: () {
-                showModalBottomSheet(
-                  context: context,
-                  builder: (context) => Container(
-                    height: 300,
-                    child: CupertinoDatePicker(
-                      mode: CupertinoDatePickerMode.dateAndTime,
-                      onDateTimeChanged: (value) {
-                        setState(() {
-                          dateTime = DateFormat('MM月dd日 HH:mm').format(value);
-                          notificationtime = value;
-                          milliseconds = value.millisecondsSinceEpoch;
-                        });
-                      },
-                    ),
-                  ),
-                );
+              onTap: () async {
+                  final DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                    builder: (BuildContext context, Widget? child) {
+                      final double width = MediaQuery.of(context).size.width;
+                      final double height = MediaQuery.of(context).size.height;
+                      return Theme(
+                        data: ThemeData.light(),
+                        child: Center(
+                          child: Container(
+                            width: width * 0.9, // 横幅を画面の90%に設定
+                            height: height * 0.8, // 高さを画面の80%に設定
+                            child: child,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+
+                  if (pickedDate != null){
+                    final TimeOfDay? pickedTime = await showTimePicker(
+                        context: context,
+                        initialTime: TimeOfDay.now(),
+                    );
+                    if (pickedTime != null){
+                      final DateTime pickedDateTime = DateTime(
+                        pickedDate.year,
+                        pickedDate.month,
+                        pickedDate.day,
+                        pickedTime.hour,
+                        pickedTime.minute,
+                      );
+                      setState(() {
+                        dateTime = DateFormat('MM月dd日 HH:mm').format(pickedDateTime);
+                        notificationtime = pickedDateTime;
+                        milliseconds = pickedDateTime.millisecondsSinceEpoch;
+                      });
+                    }
+                  }
               },
             ),
           ),
