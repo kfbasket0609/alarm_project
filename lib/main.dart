@@ -159,9 +159,9 @@ class _MyAppState extends State<MyApp> {
             bottomRight: Radius.circular(30),
           ),
         ),
-        height: isLandscape ? double.infinity : screenHeight * 0.1,
+        height: isLandscape ? double.infinity : screenHeight * 0.20,
         width: isLandscape ? screenWidth * 0.5 : double.infinity,
-        child: isLandscape ? Column(
+        child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 年の表示
@@ -194,16 +194,6 @@ class _MyAppState extends State<MyApp> {
               ),
             ),
           ],
-        ) : Center(
-          // 縦向きの場合
-          child: Text(
-            DateFormat.yMEd().add_jms().format(DateTime.now()),
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 40 * scalingFactor,
-              color: Colors.black,
-            ),
-          ),
         ),
       );
     }
