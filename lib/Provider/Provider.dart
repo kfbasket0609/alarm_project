@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:alarm_project/Model/Model.dart';
 import 'package:alarm_project/Screen/Add_Alarm.dart';
 import 'package:alarm_project/main.dart';
@@ -15,21 +14,54 @@ import 'dart:io' show Platform; //iOSとAndroidの分割に必要
 // ChangeNotifierをextendsしているクラスは、インスタンスの中のメソッドが実行されるとchangeNotifierで知らせることができるようになる
 // modelist Modelクラスのオブジェクトのみ格納可能
 // listofstring modelistをJsonに変換し、SharedPreferencesに保存する際に使用
+
+
 class alarmprovider extends ChangeNotifier{
-
   late SharedPreferences preferences;
-
   List<Model> modelist=[];
-
+  List<Model> filteredList = [];
   List<String> listofstring=[];
-
   FlutterLocalNotificationsPlugin? flutterLocalNotificationsPlugin;
-
   late BuildContext context;
+  int currentTabIndex = 0;
 
+  void changeTab(int index){
+    currentTabIndex = index;
+    filterAlarms();
+    notifyListeners();
+  }
+
+  void filterAlarms(){
+    final now = DateTime.now();
+    final startOfWeek = now.subtract(Duration(days: now.weekday -1));
+    final endOfWeek = startOfWeek.add(const Duration(days:6));
+
+    switch (currentTabIndex) {
+      case 0:    // 日たぶ
+      filteredList = modelist.where((alarm){
+        final alarmDateTime = DateTime.fromMillisecondsSinceEpoch(alarm.milliseconds!);
+        return isSameDay(alarmDateTime, now);
+      }).toList();
+      break;
+      case 1:// 週たぶ
+        filteredList = modelist.where((alarm){
+          final alarmDateTime = DateTime.fromMillisecondsSinceEpoch(alarm.milliseconds!);
+          return alarmDateTime.isAfter(startOfWeek.subtract(const Duration(days: 1))) && alarmDateTime.isBefore(endOfWeek.add(const Duration(days: 1)));
+        }).toList();
+      break;
+      case 2: // 月タブ
+        filteredList = modelist; // とりあえず全て表示
+        break;
+    }
+    notifyListeners();
+  }
+  bool isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+        date1.month == date2.month &&
+        date1.day == date2.day;
+  }
   // alarmをmodelistに追加するメゾット
   SetAlaram(String label,String dateTime,bool check,String repeat,int id,int milliseconds,String title, String location, String memo, String notificationSound, String notificationImage, List<String> repeatDays,){
-
     modelist.add(Model(
       label: label,
       dateTime: dateTime,
@@ -44,36 +76,25 @@ class alarmprovider extends ChangeNotifier{
       notificationImage: notificationImage,
       repeatDays: repeatDays,
     ));
+    filterAlarms(); // アラーム追加後にフィルタリングを実行
     notifyListeners();
   }
-
-
   // alarmのオンオフを切り替える(check状態)
   EditSwitch(int index,bool check){
     modelist[index].check=check;
+    filterAlarms(); // スイッチ変更後にフィルタリングを実行
     notifyListeners();
   }
-
-
   // SharedPreferencesを使いアプリの再起動後も保存されたアラームリストを復元
-  GetData()async{
-
-    preferences=await SharedPreferences.getInstance();
-
+  GetData()async {
+    preferences = await SharedPreferences.getInstance();
     List<String>? cominglist = await preferences.getStringList("data");
-
-    if(cominglist == null){
-
-
-    }else{
-
+    if (cominglist == null) {
+    } else {
       modelist = cominglist.map((e) => Model.fromJson(json.decode(e))).toList();
+      filterAlarms(); // データ取得後にフィルタリングを実行
       notifyListeners();
     }
-
-
-
-
   }
 
 
