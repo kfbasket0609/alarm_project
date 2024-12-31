@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    initializeDateFormatting('ja_JP');
+    initializeDateFormatting('ja_JP',null);
     context.read<alarmprovider>().Inituilize(context);
     Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {});
@@ -166,7 +166,7 @@ class _MyAppState extends State<MyApp> {
           children: [
             // 年の表示
             Text(
-              DateFormat('yyyy').format(DateTime.now()),
+              DateFormat('yyyy年', 'ja_JP').format(DateTime.now()),
               style: TextStyle(
                 fontWeight: FontWeight.w500,
                 fontSize: 36 * scalingFactor,
@@ -248,7 +248,7 @@ class _MyAppState extends State<MyApp> {
                   fontWeight: FontWeight.bold
                 ),
               unselectedLabelStyle: TextStyle(
-                fontSize: 30 * scalingFactor,
+                fontSize: 20 * scalingFactor,
             ),
                 tabs: const[
                   Tab(text: '日'),
@@ -283,20 +283,134 @@ class _MyAppState extends State<MyApp> {
                 ],
               ),
               // 週タブのコンテンツ
+              // 週タブのコンテンツ
               isLandscape
-                  ? Row(
-                children: [
-                  buildTimeDisplay(),
-                  Expanded(
-                    child: Column(
-                      children: [
-                        buildAlarmList(),
-                        buildAddButton(),
-                      ],
-                    ),
+                  ? Container(
+                width: double.infinity,
+                height: double.infinity,
+                padding: EdgeInsets.all(16.0 * scalingFactor),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
                   ),
-                ],
+                  padding: EdgeInsets.all(16.0 * scalingFactor),
+                  child: Column(
+                    children: [
+                      // 週の表示
+                      Text(
+                        '${DateFormat('yyyy年M月', 'ja_JP').format(DateTime.now())}',
+                        style: TextStyle(
+                          fontSize: 24 * scalingFactor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 20 * scalingFactor),
+                      // 曜日ヘッダー
+                      Row(
+                        children: [
+                          ...['月', '火', '水', '木', '金', '土', '日'].map((day) =>
+                              Expanded(
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0 * scalingFactor),
+                                  width: 90 * scalingFactor,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    day,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 20 * scalingFactor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ).toList(),
+                        ],
+                      ),
+                      SizedBox(height: 10 * scalingFactor),
+                      // 曜日ごとの予定リスト
+                      Expanded(
+                        child: Consumer<alarmprovider>(
+                          builder: (context, alarm, child) {
+                            return Row(
+                              children: List.generate(7, (dayIndex) {
+                                // 現在の週の開始日を取得
+                                final now = DateTime.now();
+                                final weekStart = now.subtract(Duration(days: now.weekday - 1));
+                                final currentDay = weekStart.add(Duration(days: dayIndex));
+
+                                // 当日の予定を取得
+                                final schedules = alarm.filteredList.where((item) {
+                                  final itemDate = DateTime.fromMillisecondsSinceEpoch(item.milliseconds!);
+                                  return itemDate.year == currentDay.year &&
+                                      itemDate.month == currentDay.month &&
+                                      itemDate.day == currentDay.day;
+                                }).toList();
+                                print('filteredList: ${alarm.filteredList}');
+                                for (var model in alarm.filteredList) {
+                                  print('Model details: $model');
+                                }
+                                return Expanded(
+                                  child: Container(
+                                    margin: EdgeInsets.symmetric(horizontal: 4 * scalingFactor),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: schedules.isEmpty
+                                          ? [Container()] // 空の場合何も表示しない
+                                          : schedules.map((schedule) {
+                                            final scheduleTime = DateTime.fromMillisecondsSinceEpoch(schedule.milliseconds!);
+                                            final formattedTime = DateFormat('HH:mm').format(scheduleTime);
+                                        return Container(
+                                          margin: EdgeInsets.all(4 * scalingFactor),
+                                          padding: EdgeInsets.all(4 * scalingFactor),
+                                          width: 120 * scalingFactor,
+                                          height: 80 * scalingFactor,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                            formattedTime,
+                                            style: TextStyle(
+                                              fontSize: 25 * scalingFactor,
+                                              color: Colors.black54,
+                                              ),
+                                              ),
+                                              SizedBox(height: 4 * scalingFactor),
+                                              Text(
+                                              schedule.label!,
+                                              style: TextStyle(fontSize: 14 * scalingFactor),
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                              ),
+                                            ]
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               )
+
                   : Column(
                 children: [
                   buildTimeDisplay(),

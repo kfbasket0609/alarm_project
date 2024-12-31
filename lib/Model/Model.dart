@@ -35,6 +35,11 @@ class Model {
     this.notificationImage = 'なし',
     this.repeatDays,
   });
+  @override
+  String toString() {
+    return 'Model(label: $label, dateTime: $dateTime, check: $check, when: $when, id: $id, milliseconds: $milliseconds)';
+  }
+
 
   // 通常のコンストラクタより複雑な定義ができる
   factory Model.fromJson(Map<String, dynamic> json) => Model(
