@@ -11,11 +11,14 @@ import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'dart:io' show Platform;
 import 'package:another_flushbar/flushbar.dart';
+import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('ja_JP', null);
   tz.initializeTimeZones();
 
   // プラットフォームに応じた通知許可のリクエスト
@@ -46,140 +49,400 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool value = false;
-
   @override
   void initState() {
     super.initState();
+    initializeDateFormatting('ja_JP',null);
     context.read<alarmprovider>().Inituilize(context);
     Timer.periodic(const Duration(seconds: 1), (timer) {
       setState(() {});
     });
     context.read<alarmprovider>().GetData();
   }
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Color(0xFFEEEFF5),
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
-        actions: const [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(
-              Icons.menu,
-              color: Colors.white,
-            ),
-          )
-        ],
-        title: const Text(
-          'Alarm Clock ',
-          style: TextStyle(color: Colors.white),
-        ),
-        centerTitle: true,
-      ),
-      body: ListView(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-                color: Colors.deepPurpleAccent,
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(30),
-                    bottomRight: Radius.circular(30)
-                ),
-            ),
-            height: MediaQuery.of(context).size.height * 0.1,
-            child: Center(
-                child: Text(
-                  DateFormat.yMEd().add_jms().format(DateTime.now(),),
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.white
-                  ),
-                ),
-            ),
-          ),
-          Consumer<alarmprovider>(
-              builder: (context, alarm, child) {
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.7,
-              child: ListView.builder(
-                  itemCount: alarm.modelist.length,
-                  itemBuilder: (BuildContext, index) {
-                    return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          height: MediaQuery.of(context).size.height * 0.1,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
-                            color: Colors.white,
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment:
-                                  MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Text(
-                                          alarm.modelist[index].dateTime!,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              color: Colors.black),
-                                        ),
-                                        Padding(
-                                          padding: const EdgeInsets.only(left: 8.0),
-                                          child: Text("| + ${alarm.modelist[index].label}"),
-                                        ),
-                                      ],
+    // デバックコード
+    // final isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double screenHeight = MediaQuery.of(context).size.height;
+    final double scalingFactor = screenWidth / 1000;
+    final bool isLandscape = MediaQuery.of(context).orientation == Orientation.landscape;
+    print('Orientation: ${isLandscape ? "Landscape" : "Portrait"}');
+
+
+    Widget buildAlarmList() {
+      return Expanded(
+        child: Consumer<alarmprovider>(
+          builder: (context, alarm, child) {
+            return ListView.builder(
+              itemCount: alarm.filteredList.length,
+              itemBuilder: (BuildContext context, int index) {
+                final alarmItem = alarm.filteredList[index];
+                return Padding(
+                  padding: EdgeInsets.all(8.0 * scalingFactor),
+                  child: Container(
+                    height: screenHeight * (isLandscape ? 0.2 : 0.15),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10 * scalingFactor),
+                      color: Colors.white,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0 * scalingFactor),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    alarmItem.dateTime!,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 24 * scalingFactor,
+                                      color: Colors.black,
                                     ),
-                                    CupertinoSwitch(
-                                        value:(alarm.modelist[index].milliseconds! < DateTime.now().microsecondsSinceEpoch)? false:alarm.modelist[index].check,
-                                        onChanged: (v) {
-                                          alarm.EditSwitch(index, v);
-                                          alarm.CancelNotification(alarm.modelist[index].id!);
-                                        }),
-                                  ],
-                                ),
-                                Text(alarm.modelist[index].when!)
-                              ],
+                                  ),
+                                  Padding(
+                                    padding: EdgeInsets.only(left: 8.0 * scalingFactor),
+                                    child: Text(
+                                      "| + ${alarmItem.label}",
+                                      style: TextStyle(fontSize: 18 * scalingFactor),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              CupertinoSwitch(
+                                value: alarmItem.milliseconds! >=
+                                    DateTime.now().millisecondsSinceEpoch
+                                    ? alarm.modelist[index].check
+                                    : false,
+                                onChanged: (v) {
+                                  alarm.EditSwitch(index, v);
+                                  alarm.CancelNotification(alarmItem.id!);
+                                },
+                              ),
+                            ],
+                          ),
+                          Text(
+                            alarmItem.when!,
+                            style: TextStyle(
+                              fontSize: 18 * scalingFactor,
                             ),
                           ),
-                        ));
-                  }),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              },
             );
-              }),
-          Container(
-            height: MediaQuery.of(context).size.height * 0.1,
-            decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30),
-                    topRight: Radius.circular(30)),
-                color: Colors.deepPurpleAccent),
-            child: Center(
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (context) => AddAlarm()));
-                  },
-                  child: Container(
-                      decoration: const BoxDecoration(
-                          color: Colors.white, shape: BoxShape.circle),
-                      child: const Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Icon(Icons.add),
-                      )),
-                )),
+          },
+        ),
+      );
+    }
+
+    Widget buildTimeDisplay() {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: isLandscape
+              ? const BorderRadius.only(
+            topRight: Radius.circular(30),
+            bottomRight: Radius.circular(30),
+          )
+              : const BorderRadius.only(
+            bottomLeft: Radius.circular(30),
+            bottomRight: Radius.circular(30),
           ),
-        ],
-      ),
+        ),
+        height: isLandscape ? double.infinity : screenHeight * 0.20,
+        width: isLandscape ? screenWidth * 0.5 : double.infinity,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 年の表示
+            Text(
+              DateFormat('yyyy年', 'ja_JP').format(DateTime.now()),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                fontSize: 36 * scalingFactor,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 20 * scalingFactor),
+            // 月日と曜日の表示
+            Text(
+              DateFormat('M月d日 (E)', 'ja_JP').format(DateTime.now()),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 48 * scalingFactor,
+                color: Colors.black,
+              ),
+            ),
+            SizedBox(height: 20 * scalingFactor),
+            // 時刻の表示
+            Text(
+              DateFormat('H:mm').format(DateTime.now()),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 72 * scalingFactor,
+                color: Colors.black,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+    Widget buildAddButton() {
+      return Container(
+        height: screenHeight * 0.1,
+        decoration: const BoxDecoration(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(30),
+            topRight: Radius.circular(30),
+          ),
+          color: Colors.white,
+        ),
+        child: Center(
+          child: GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => AddAlarm()),
+              );
+            },
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.black,
+                shape: BoxShape.circle,
+              ),
+              child: Padding(
+                padding: EdgeInsets.all(12.0 * scalingFactor),
+                child: const Icon(Icons.add),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return DefaultTabController(
+        length: 3,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFEEFF5),
+          appBar: AppBar(
+            backgroundColor: Colors.white,
+            bottom: TabBar(
+                onTap: (index){
+                  context.read<alarmprovider>().changeTab(index);
+                },
+                labelColor:Colors.black,
+                unselectedLabelColor: Colors.black,
+                indicatorColor: Colors.black,
+                labelStyle: TextStyle(
+                  fontSize: 30 * scalingFactor,
+                  fontWeight: FontWeight.bold
+                ),
+              unselectedLabelStyle: TextStyle(
+                fontSize: 20 * scalingFactor,
+            ),
+                tabs: const[
+                  Tab(text: '日'),
+                  Tab(text: '週'),
+                  Tab(text: '月'),
+                ],
+            ),
+              toolbarHeight : isLandscape ? 40 : null
+          ),
+          body: TabBarView(
+            children: [
+              // 日タブのコンテンツ
+              isLandscape
+                  ? Row(
+                children: [
+                  buildTimeDisplay(),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        buildAlarmList(),
+                        buildAddButton(),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+                  : Column(
+                children: [
+                  buildTimeDisplay(),
+                  buildAlarmList(),
+                  buildAddButton(),
+                ],
+              ),
+              // 週タブのコンテンツ
+              // 週タブのコンテンツ
+              isLandscape
+                  ? Container(
+                width: double.infinity,
+                height: double.infinity,
+                padding: EdgeInsets.all(16.0 * scalingFactor),
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  padding: EdgeInsets.all(16.0 * scalingFactor),
+                  child: Column(
+                    children: [
+                      // 週の表示
+                      Text(
+                        '${DateFormat('yyyy年M月', 'ja_JP').format(DateTime.now())}',
+                        style: TextStyle(
+                          fontSize: 24 * scalingFactor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      SizedBox(height: 20 * scalingFactor),
+                      // 曜日ヘッダー
+                      Row(
+                        children: [
+                          ...['月', '火', '水', '木', '金', '土', '日'].map((day) =>
+                              Expanded(
+                                child: Container(
+                                  padding: EdgeInsets.symmetric(vertical: 8.0 * scalingFactor),
+                                  width: 90 * scalingFactor,
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                  ),
+                                  child: Text(
+                                    day,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 20 * scalingFactor,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ).toList(),
+                        ],
+                      ),
+                      SizedBox(height: 10 * scalingFactor),
+                      // 曜日ごとの予定リスト
+                      Expanded(
+                        child: Consumer<alarmprovider>(
+                          builder: (context, alarm, child) {
+                            return Row(
+                              children: List.generate(7, (dayIndex) {
+                                // 現在の週の開始日を取得
+                                final now = DateTime.now();
+                                final weekStart = now.subtract(Duration(days: now.weekday - 1));
+                                final currentDay = weekStart.add(Duration(days: dayIndex));
+
+                                // 当日の予定を取得
+                                final schedules = alarm.filteredList.where((item) {
+                                  final itemDate = DateTime.fromMillisecondsSinceEpoch(item.milliseconds!);
+                                  return itemDate.year == currentDay.year &&
+                                      itemDate.month == currentDay.month &&
+                                      itemDate.day == currentDay.day;
+                                }).toList();
+                                print('filteredList: ${alarm.filteredList}');
+                                for (var model in alarm.filteredList) {
+                                  print('Model details: $model');
+                                }
+                                return Expanded(
+                                  child: Container(
+                                    margin: EdgeInsets.symmetric(horizontal: 4 * scalingFactor),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.center,
+                                      children: schedules.isEmpty
+                                          ? [Container()] // 空の場合何も表示しない
+                                          : schedules.map((schedule) {
+                                            final scheduleTime = DateTime.fromMillisecondsSinceEpoch(schedule.milliseconds!);
+                                            final formattedTime = DateFormat('HH:mm').format(scheduleTime);
+                                        return Container(
+                                          margin: EdgeInsets.all(4 * scalingFactor),
+                                          padding: EdgeInsets.all(4 * scalingFactor),
+                                          width: 120 * scalingFactor,
+                                          height: 80 * scalingFactor,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              Text(
+                                            formattedTime,
+                                            style: TextStyle(
+                                              fontSize: 25 * scalingFactor,
+                                              color: Colors.black54,
+                                              ),
+                                              ),
+                                              SizedBox(height: 4 * scalingFactor),
+                                              Text(
+                                              schedule.label!,
+                                              style: TextStyle(fontSize: 14 * scalingFactor),
+                                              overflow: TextOverflow.ellipsis,
+                                              textAlign: TextAlign.center,
+                                              ),
+                                            ]
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                );
+                              }),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+
+                  : Column(
+                children: [
+                  buildTimeDisplay(),
+                  buildAlarmList(),
+                  buildAddButton(),
+                ],
+              ),
+              // 月タブのコンテンツ
+              isLandscape
+                  ? Row(
+                children: [
+                  buildTimeDisplay(),
+                  Expanded(
+                    child: Column(
+                      children: [
+                        buildAlarmList(),
+                        buildAddButton(),
+                      ],
+                    ),
+                  ),
+                ],
+              )
+                  : Column(
+                children: [
+                  buildTimeDisplay(),
+                  buildAlarmList(),
+                  buildAddButton(),
+                ],
+              ),
+            ],
+          ),
+        ),
     );
   }
 }
