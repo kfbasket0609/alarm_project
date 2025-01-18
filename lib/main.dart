@@ -143,7 +143,6 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
-
     Widget buildTimeDisplay() {
       return Container(
         decoration: BoxDecoration(
@@ -233,6 +232,7 @@ class _MyAppState extends State<MyApp> {
         length: 3,
         child: Scaffold(
           backgroundColor: Colors.white,
+
           appBar: AppBar(
             backgroundColor: Colors.white,
             bottom: TabBar(
