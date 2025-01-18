@@ -75,63 +75,61 @@ class _MyAppState extends State<MyApp> {
       return Expanded(
         child: Consumer<alarmprovider>(
           builder: (context, alarm, child) {
+            final sortedAlarms = List<Model>.from(alarm.filteredList)
+              ..sort((a,b) => (a.milliseconds ?? 0).compareTo(b.milliseconds ?? 0));
             return ListView.builder(
-              itemCount: alarm.filteredList.length,
+              itemCount: sortedAlarms.length,
               itemBuilder: (BuildContext context, int index) {
-                final alarmItem = alarm.filteredList[index];
+                final alarmItem = sortedAlarms[index];
+                final originalIndex = alarm.filteredList.indexWhere((item) => item.id == alarmItem.id);
+
                 return Padding(
                   padding: EdgeInsets.all(8.0 * scalingFactor),
                   child: Container(
-                    height: screenHeight * (isLandscape ? 0.2 : 0.15),
+                    height: screenHeight * (isLandscape ? 0.15 : 0.1), // 高さを少し縮小
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(10 * scalingFactor),
-                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(30 * scalingFactor),
+                      color: Colors.grey.withOpacity(0.3),
                     ),
                     child: Padding(
-                      padding: EdgeInsets.all(8.0 * scalingFactor),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.0 * scalingFactor,
+                        vertical: 8.0 * scalingFactor,
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          // 時刻とラベルを横並びに表示
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    alarmItem.dateTime!,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 24 * scalingFactor,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: EdgeInsets.only(left: 8.0 * scalingFactor),
-                                    child: Text(
-                                      "| + ${alarmItem.label}",
-                                      style: TextStyle(fontSize: 18 * scalingFactor),
-                                    ),
-                                  ),
-                                ],
+                              Text(
+                                alarmItem.dateTime!, // 時刻
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 30 * scalingFactor,
+                                  color: Colors.black,
+                                ),
                               ),
-                              CupertinoSwitch(
-                                value: alarmItem.milliseconds! >=
-                                    DateTime.now().millisecondsSinceEpoch
-                                    ? alarm.modelist[index].check
-                                    : false,
-                                onChanged: (v) {
-                                  alarm.EditSwitch(index, v);
-                                  alarm.CancelNotification(alarmItem.id!);
-                                },
+                              SizedBox(width: 12 * scalingFactor),
+                              Text(
+                                alarmItem.label!, // ラベル
+                                style: TextStyle(
+                                  fontSize: 20 * scalingFactor,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ],
                           ),
-                          Text(
-                            alarmItem.when!,
-                            style: TextStyle(
-                              fontSize: 18 * scalingFactor,
-                            ),
+                          // スイッチ
+                          CupertinoSwitch(
+                            value: alarmItem.milliseconds! >=
+                                DateTime.now().millisecondsSinceEpoch
+                                ? alarm.modelist[originalIndex].check
+                                : false,
+                            onChanged: (v) {
+                              alarm.EditSwitch(originalIndex, v);
+                              alarm.CancelNotification(alarmItem.id!);
+                            },
                           ),
                         ],
                       ),
@@ -233,7 +231,8 @@ class _MyAppState extends State<MyApp> {
     return DefaultTabController(
         length: 3,
         child: Scaffold(
-          backgroundColor: const Color(0xFFEEFF5),
+          backgroundColor: Colors.white,
+
           appBar: AppBar(
             backgroundColor: Colors.white,
             bottom: TabBar(
@@ -306,29 +305,41 @@ class _MyAppState extends State<MyApp> {
                         ),
                       ),
                       SizedBox(height: 20 * scalingFactor),
-                      // 曜日ヘッダー
                       Row(
-                        children: [
-                          ...['月', '火', '水', '木', '金', '土', '日'].map((day) =>
-                              Expanded(
-                                child: Container(
-                                  padding: EdgeInsets.symmetric(vertical: 8.0 * scalingFactor),
-                                  width: 90 * scalingFactor,
-                                  decoration: BoxDecoration(
-                                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                        children: List<Widget>.generate(7, (index) =>
+                            Expanded(
+                              child: Container(
+                                padding: EdgeInsets.symmetric(vertical: 8.0 * scalingFactor),
+                                width: 90 * scalingFactor,
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                                ),
+                                child: Column(
+                                children: [
+                                  Text(
+                                ['月', '火', '水', '木', '金', '土', '日'][index],
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 20 * scalingFactor,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  child: Text(
-                                    day,
+                                  ),
+                                  SizedBox(height: 4 * scalingFactor),
+                                  Text(
+                                    '${DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1)).add(Duration(days: index)).day}日',
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
-                                      fontSize: 20 * scalingFactor,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
+                                      fontSize: 18 * scalingFactor,
+                                      fontWeight: DateTime.now().day ==
+                                          DateTime.now().subtract(Duration(days: DateTime.now().weekday - 1)).add(Duration(days: index)).day ?
+                                      FontWeight.bold : FontWeight.normal,
+                                  )
+                                  )
+                                ],
+                                )
                               ),
-                          ).toList(),
-                        ],
+                            ),
+                        ),
                       ),
                       SizedBox(height: 10 * scalingFactor),
                       // 曜日ごとの予定リスト
@@ -348,7 +359,10 @@ class _MyAppState extends State<MyApp> {
                                   return itemDate.year == currentDay.year &&
                                       itemDate.month == currentDay.month &&
                                       itemDate.day == currentDay.day;
-                                }).toList();
+                                }).toList()
+                                ..sort((a,b){
+                                  return a.milliseconds!.compareTo(b.milliseconds!);
+                                });
                                 print('filteredList: ${alarm.filteredList}');
                                 for (var model in alarm.filteredList) {
                                   print('Model details: $model');
