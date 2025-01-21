@@ -144,7 +144,6 @@ class _MyAppState extends State<MyApp> {
       );
     }
 
-
     Widget buildTimeDisplay() {
       return Container(
         decoration: BoxDecoration(
