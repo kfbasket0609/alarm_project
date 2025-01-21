@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:alarm_project/Model/Model.dart';
 import 'package:alarm_project/Provider/Provider.dart';
 import 'package:alarm_project/Screen/Add_Alarm.dart';
+import 'package:alarm_project/Screen/alarm_detail_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -379,36 +380,46 @@ class _MyAppState extends State<MyApp> {
                                       children: schedules.isEmpty
                                           ? [Container()] // 空の場合何も表示しない
                                           : schedules.map((schedule) {
-                                            final scheduleTime = DateTime.fromMillisecondsSinceEpoch(schedule.milliseconds!);
-                                            final formattedTime = DateFormat('HH:mm').format(scheduleTime);
-                                        return Container(
-                                          margin: EdgeInsets.all(4 * scalingFactor),
-                                          padding: EdgeInsets.all(4 * scalingFactor),
-                                          width: 120 * scalingFactor,
-                                          height: 80 * scalingFactor,
-                                          decoration: BoxDecoration(
-                                            color: Colors.grey.withOpacity(0.2),
-                                            borderRadius: BorderRadius.circular(20),
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            crossAxisAlignment: CrossAxisAlignment.center,
-                                            children: [
-                                              Text(
-                                            formattedTime,
-                                            style: TextStyle(
-                                              fontSize: 25 * scalingFactor,
-                                              color: Colors.black54,
+                                        final scheduleTime = DateTime.fromMillisecondsSinceEpoch(schedule.milliseconds!);
+                                        final formattedTime = DateFormat('HH:mm').format(scheduleTime);
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => AlarmDetailPage(alarm: schedule),
                                               ),
-                                              ),
-                                              SizedBox(height: 4 * scalingFactor),
-                                              Text(
-                                              schedule.label!,
-                                              style: TextStyle(fontSize: 14 * scalingFactor),
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                              ),
-                                            ]
+                                            );
+                                          },
+                                          child: Container(
+                                            margin: EdgeInsets.all(4 * scalingFactor),
+                                            padding: EdgeInsets.all(4 * scalingFactor),
+                                            width: 120 * scalingFactor,
+                                            height: 80 * scalingFactor,  // ここにカンマを追加
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.withOpacity(0.2),
+                                              borderRadius: BorderRadius.circular(20),
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.center,
+                                              children: [
+                                                Text(
+                                                  formattedTime,
+                                                  style: TextStyle(
+                                                    fontSize: 25 * scalingFactor,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 4 * scalingFactor),
+                                                Text(
+                                                  schedule.label!,
+                                                  style: TextStyle(fontSize: 14 * scalingFactor),
+                                                  overflow: TextOverflow.ellipsis,
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         );
                                       }).toList(),
