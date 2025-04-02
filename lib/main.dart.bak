@@ -86,63 +86,53 @@ class _MyAppState extends State<MyApp> {
 
                 return Padding(
                   padding: EdgeInsets.all(8.0 * scalingFactor),
-                  child: GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AlarmDetailPage(alarm: alarmItem),
-                        ),
-                      );
-                    },
-                    child: Container(
-                      height: screenHeight * (isLandscape ? 0.15 : 0.1),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30 * scalingFactor),
-                        color: Colors.grey.withOpacity(0.3),
+                  child: Container(
+                    height: screenHeight * (isLandscape ? 0.15 : 0.1), // 高さを少し縮小
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30 * scalingFactor),
+                      color: Colors.grey.withOpacity(0.3),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 16.0 * scalingFactor,
+                        vertical: 8.0 * scalingFactor,
                       ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 16.0 * scalingFactor,
-                          vertical: 8.0 * scalingFactor,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            // 時刻とラベルを横並びに表示
-                            Row(
-                              children: [
-                                Text(
-                                  alarmItem.dateTime!, // 時刻
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 30 * scalingFactor,
-                                    color: Colors.black,
-                                  ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          // 時刻とラベルを横並びに表示
+                          Row(
+                            children: [
+                              Text(
+                                alarmItem.dateTime!, // 時刻
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 30 * scalingFactor,
+                                  color: Colors.black,
                                 ),
-                                SizedBox(width: 12 * scalingFactor),
-                                Text(
-                                  alarmItem.label!, // ラベル
-                                  style: TextStyle(
-                                    fontSize: 20 * scalingFactor,
-                                    color: Colors.black87,
-                                  ),
+                              ),
+                              SizedBox(width: 12 * scalingFactor),
+                              Text(
+                                alarmItem.label!, // ラベル
+                                style: TextStyle(
+                                  fontSize: 20 * scalingFactor,
+                                  color: Colors.black87,
                                 ),
-                              ],
-                            ),
-                            // スイッチ
-                            CupertinoSwitch(
-                              value: alarmItem.milliseconds! >=
-                                  DateTime.now().millisecondsSinceEpoch
-                                  ? alarm.modelist[originalIndex].check
-                                  : false,
-                              onChanged: (v) {
-                                alarm.EditSwitch(originalIndex, v);
-                                alarm.CancelNotification(alarmItem.id!);
-                              },
-                            ),
-                          ],
-                        ),
+                              ),
+                            ],
+                          ),
+                          // スイッチ
+                          CupertinoSwitch(
+                            value: alarmItem.milliseconds! >=
+                                DateTime.now().millisecondsSinceEpoch
+                                ? alarm.modelist[originalIndex].check
+                                : false,
+                            onChanged: (v) {
+                              alarm.EditSwitch(originalIndex, v);
+                              alarm.CancelNotification(alarmItem.id!);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -153,6 +143,7 @@ class _MyAppState extends State<MyApp> {
         ),
       );
     }
+
 
     Widget buildTimeDisplay() {
       return Container(
