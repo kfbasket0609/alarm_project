@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../Model/Model.dart';
-
 class AlarmDetailPage extends StatelessWidget {
   final Model alarm;
 

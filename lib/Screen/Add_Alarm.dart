@@ -37,7 +37,6 @@ class _AddAlaramState extends State<AddAlarm> {
     context.read<alarmprovider>().GetData();
     super.initState();
   }
-
   @override
   void dispose() {
     titleController.dispose();
@@ -50,6 +49,7 @@ class _AddAlaramState extends State<AddAlarm> {
   Widget _buildSectionHeader(String title, {IconData? icon}) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scalingFactor = screenWidth / 1000;
+
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -147,7 +147,6 @@ class _AddAlaramState extends State<AddAlarm> {
       onTap: onTap,
     );
   }
-
   // 日時選択ダイアログ
   Future<void> _selectDateTime() async {
     final DateTime now = DateTime.now();
@@ -221,7 +220,6 @@ class _AddAlaramState extends State<AddAlarm> {
           builder: (context, setDialogState) {
             final double screenWidth = MediaQuery.of(context).size.width;
             final double scalingFactor = screenWidth / 1000;
-
             return AlertDialog(
               title: Text(
                 '繰り返し設定',
