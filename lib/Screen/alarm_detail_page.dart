@@ -1,35 +1,94 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:audioplayers/audioplayers.dart';
 import '../Model/Model.dart';
-class AlarmDetailPage extends StatelessWidget {
+
+class AlarmDetailPage extends StatefulWidget {
   final Model alarm;
 
   const AlarmDetailPage({Key? key, required this.alarm}) : super(key: key);
 
   @override
+  State<AlarmDetailPage> createState() => _AlarmDetailPageState();
+}
+
+class _AlarmDetailPageState extends State<AlarmDetailPage> {
+  final AudioPlayer audioPlayer = AudioPlayer();
+  bool isPlayingSound = false;
+
+  @override
+  void dispose() {
+    audioPlayer.dispose();
+    super.dispose();
+  }
+
+  // 通知音を再生
+  Future<void> _playNotificationSound() async {
+    if (isPlayingSound) {
+      await audioPlayer.stop();
+      setState(() {
+        isPlayingSound = false;
+      });
+      return;
+    }
+
+    try {
+      await audioPlayer.stop();
+
+      if (widget.alarm.hasCustomSound()) {
+        // カスタム通知音の場合
+        await audioPlayer.play(DeviceFileSource(widget.alarm.notificationSound!));
+      } else {
+        // デフォルト通知音の場合
+        String assetPath;
+        switch (widget.alarm.notificationSound) {
+          case 'デフォルト2':
+            assetPath = 'assets/sounds/default2.mp3';
+            break;
+          case 'デフォルト3':
+            assetPath = 'assets/sounds/default3.mp3';
+            break;
+          case '優しい音':
+            assetPath = 'assets/sounds/gentle.mp3';
+            break;
+          case '穏やかな音':
+            assetPath = 'assets/sounds/calm.mp3';
+            break;
+          default:
+            assetPath = 'assets/sounds/default1.mp3';
+        }
+        await audioPlayer.play(AssetSource(assetPath));
+      }
+
+      setState(() {
+        isPlayingSound = true;
+      });
+
+      // 再生完了後に状態を更新
+      audioPlayer.onPlayerComplete.listen((event) {
+        if (mounted) {
+          setState(() {
+            isPlayingSound = false;
+          });
+        }
+      });
+    } catch (e) {
+      print('Error playing notification sound: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('通知音の再生中にエラーが発生しました'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 画面サイズに基づくスケーリング
     final double screenWidth = MediaQuery.of(context).size.width;
     final double scalingFactor = screenWidth / 1000;
 
-    // アラーム時間をDateTimeに変換
-    DateTime? alarmDateTime;
-    if (alarm.milliseconds != null) {
-      alarmDateTime = DateTime.fromMillisecondsSinceEpoch(alarm.milliseconds!);
-    }
-
-    // 時間表示のフォーマット
-    String formattedTime = '';
-    String formattedDate = '';
-    if (alarmDateTime != null) {
-      formattedTime = DateFormat('HH:mm').format(alarmDateTime);
-      formattedDate = DateFormat('yyyy年MM月dd日(E)', 'ja_JP').format(alarmDateTime);
-    } else if (alarm.dateTime != null) {
-      formattedTime = alarm.dateTime!;
-    }
-
     return Scaffold(
-      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
@@ -60,92 +119,40 @@ class AlarmDetailPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 時間表示部分（大きく表示）
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16 * scalingFactor),
-              ),
-              child: Padding(
-                padding: EdgeInsets.all(20.0 * scalingFactor),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.access_time,
-                          size: 32 * scalingFactor,
-                          color: Colors.blue,
-                        ),
-                        SizedBox(width: 12 * scalingFactor),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '時間',
-                              style: TextStyle(
-                                fontSize: 18 * scalingFactor,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            SizedBox(height: 4 * scalingFactor),
-                            Text(
-                              formattedTime,
-                              style: TextStyle(
-                                fontSize: 40 * scalingFactor,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    if (formattedDate.isNotEmpty) ...[
-                      SizedBox(height: 8 * scalingFactor),
-                      Padding(
-                        padding: EdgeInsets.only(left: 44 * scalingFactor),
-                        child: Text(
-                          formattedDate,
-                          style: TextStyle(
-                            fontSize: 18 * scalingFactor,
-                            color: Colors.grey[800],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+            DetailCard(
+              icon: Icons.access_time,
+              label: '時間',
+              value: widget.alarm.dateTime ?? '',
+              scalingFactor: scalingFactor,
+              iconColor: Colors.blue,
+              isLarge: true,
             ),
-
-            SizedBox(height: 16 * scalingFactor),
 
             // タイトル
             DetailCard(
               icon: Icons.title,
               label: 'タイトル',
-              value: alarm.title ?? '',
+              value: widget.alarm.title ?? '',
               scalingFactor: scalingFactor,
               iconColor: Colors.orange,
             ),
 
             // 場所
-            if (alarm.location != null && alarm.location!.isNotEmpty)
+            if (widget.alarm.location != null && widget.alarm.location!.isNotEmpty)
               DetailCard(
                 icon: Icons.location_on,
                 label: '場所',
-                value: alarm.location!,
+                value: widget.alarm.location!,
                 scalingFactor: scalingFactor,
                 iconColor: Colors.red,
               ),
 
             // メモ
-            if (alarm.memo != null && alarm.memo!.isNotEmpty)
+            if (widget.alarm.memo != null && widget.alarm.memo!.isNotEmpty)
               DetailCard(
                 icon: Icons.note,
                 label: 'メモ',
-                value: alarm.memo!,
+                value: widget.alarm.memo!,
                 scalingFactor: scalingFactor,
                 iconColor: Colors.green,
                 isMultiLine: true,
@@ -155,7 +162,7 @@ class AlarmDetailPage extends StatelessWidget {
             DetailCard(
               icon: Icons.repeat,
               label: '繰り返し',
-              value: alarm.getRepeatDescription(),
+              value: widget.alarm.getRepeatDescription(),
               scalingFactor: scalingFactor,
               iconColor: Colors.purple,
             ),
@@ -164,18 +171,30 @@ class AlarmDetailPage extends StatelessWidget {
             DetailCard(
               icon: Icons.notifications_active,
               label: '通知音',
-              value: alarm.notificationSound ?? 'デフォルト',
+              value: widget.alarm.getNotificationSoundDisplayName(),
               scalingFactor: scalingFactor,
               iconColor: Colors.amber,
+              trailing: widget.alarm.notificationSound != null && widget.alarm.notificationSound != 'なし'
+                  ? IconButton(
+                icon: Icon(
+                  isPlayingSound ? Icons.stop : Icons.play_arrow,
+                  color: Colors.blue,
+                  size: 28 * scalingFactor,
+                ),
+                onPressed: _playNotificationSound,
+              )
+                  : null,
             ),
 
             // 通知画像
             DetailCard(
               icon: Icons.image,
               label: '通知画像',
-              value: alarm.notificationImage ?? 'なし',
+              value: widget.alarm.getNotificationImageDisplayName(),
               scalingFactor: scalingFactor,
               iconColor: Colors.teal,
+              hasImage: widget.alarm.hasCustomImage(),
+              imagePath: widget.alarm.hasCustomImage() ? widget.alarm.notificationImage : null,
             ),
 
             SizedBox(height: 24 * scalingFactor),
@@ -215,6 +234,10 @@ class DetailCard extends StatelessWidget {
   final double scalingFactor;
   final Color iconColor;
   final bool isMultiLine;
+  final bool isLarge;
+  final Widget? trailing;
+  final bool hasImage;
+  final String? imagePath;
 
   const DetailCard({
     Key? key,
@@ -224,6 +247,10 @@ class DetailCard extends StatelessWidget {
     required this.scalingFactor,
     required this.iconColor,
     this.isMultiLine = false,
+    this.isLarge = false,
+    this.trailing,
+    this.hasImage = false,
+    this.imagePath,
   }) : super(key: key);
 
   @override
@@ -237,39 +264,57 @@ class DetailCard extends StatelessWidget {
         ),
         child: Padding(
           padding: EdgeInsets.all(16.0 * scalingFactor),
-          child: Row(
-            crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                icon,
-                size: 28 * scalingFactor,
-                color: iconColor,
+              Row(
+                crossAxisAlignment: isMultiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
+                children: [
+                  Icon(
+                    icon,
+                    size: isLarge ? 36 * scalingFactor : 28 * scalingFactor,
+                    color: iconColor,
+                  ),
+                  SizedBox(width: 16 * scalingFactor),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: TextStyle(
+                            fontSize: 16 * scalingFactor,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        SizedBox(height: 4 * scalingFactor),
+                        Text(
+                          value,
+                          style: TextStyle(
+                            fontSize: isLarge ? 40 * scalingFactor : 22 * scalingFactor,
+                            fontWeight: isLarge ? FontWeight.bold : FontWeight.w500,
+                          ),
+                          maxLines: isMultiLine ? null : 2,
+                          overflow: isMultiLine ? null : TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (trailing != null) trailing!,
+                ],
               ),
-              SizedBox(width: 16 * scalingFactor),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontSize: 16 * scalingFactor,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                    SizedBox(height: 4 * scalingFactor),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 22 * scalingFactor,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: isMultiLine ? null : 2,
-                      overflow: isMultiLine ? null : TextOverflow.ellipsis,
-                    ),
-                  ],
+              if (hasImage && imagePath != null) ...[
+                SizedBox(height: 16 * scalingFactor),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8 * scalingFactor),
+                  child: Image.file(
+                    File(imagePath!),
+                    height: 200 * scalingFactor,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 Model modelFromJson(String str) => Model.fromJson(json.decode(str));
 
@@ -20,7 +21,6 @@ class Model {
   List<String>? repeatDays;
 
   // コンストラクタの定義
-  // required -> null 不可
   Model({
     required this.label,
     required this.dateTime,
@@ -35,11 +35,11 @@ class Model {
     this.notificationImage = 'なし',
     this.repeatDays,
   });
+
   @override
   String toString() {
     return 'Model(label: $label, dateTime: $dateTime, check: $check, when: $when, id: $id, milliseconds: $milliseconds)';
   }
-
 
   // 通常のコンストラクタより複雑な定義ができる
   factory Model.fromJson(Map<String, dynamic> json) => Model(
@@ -84,5 +84,48 @@ class Model {
     }
     return '毎週 ${repeatDays!.join('・')}';
   }
-}
 
+  // 通知音のファイル存在チェック
+  bool hasCustomSound() {
+    if (notificationSound == null) return false;
+    if (!notificationSound!.startsWith('/')) return false;
+
+    try {
+      return File(notificationSound!).existsSync();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 通知画像のファイル存在チェック
+  bool hasCustomImage() {
+    if (notificationImage == null) return false;
+    if (!notificationImage!.startsWith('/')) return false;
+
+    try {
+      return File(notificationImage!).existsSync();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // 通知音の表示名を取得
+  String getNotificationSoundDisplayName() {
+    if (notificationSound == null) return 'デフォルト1';
+    if (hasCustomSound()) {
+      final fileName = notificationSound!.split('/').last;
+      return 'カスタム: $fileName';
+    }
+    return notificationSound!;
+  }
+
+  // 通知画像の表示名を取得
+  String getNotificationImageDisplayName() {
+    if (notificationImage == null) return 'なし';
+    if (hasCustomImage()) {
+      final fileName = notificationImage!.split('/').last;
+      return 'カスタム: $fileName';
+    }
+    return notificationImage!;
+  }
+}

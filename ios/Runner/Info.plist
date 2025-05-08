@@ -51,5 +51,13 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>通知画像を選択するために写真ライブラリへのアクセスが必要です</string>
+    <key>NSAppleMusicUsageDescription</key>
+    <string>通知音を選択するためにメディアライブラリへのアクセスが必要です</string>
+    <key>NSCameraUsageDescription</key>
+    <string>通知画像を撮影するためにカメラへのアクセスが必要です</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>このアプリではマイクを使用します</string>
 </dict>
 </plist>
