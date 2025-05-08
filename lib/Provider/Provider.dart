@@ -162,28 +162,96 @@ class alarmprovider extends ChangeNotifier{
 
 
 
-  SecduleNotification(DateTime datetim,int Randomnumber) async {
+// Provider.dartファイルの通知関連機能の更新
 
-    int newtime= datetim.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch;
+// 通知設定関連の追加（SecduleNotification関数を更新）
+  SecduleNotification(DateTime datetim, int Randomnumber) async {
+    int newtime = datetim.millisecondsSinceEpoch - DateTime.now().millisecondsSinceEpoch;
     print(datetim.millisecondsSinceEpoch);
     print(DateTime.now().millisecondsSinceEpoch);
     print(newtime);
-    final sound = 'sound.mp3';
+
+    // 最新のアラーム情報を取得
+    Model? alarm;
+    try {
+      alarm = modelist.firstWhere(
+            (element) => element.id == Randomnumber,
+      );
+    } catch (e) {
+      // 見つからない場合は alarm が null のままになる
+      alarm = null;
+    }
+
+    if (alarm == null) return;
+
+    // 通知サウンドの設定
+    String? sound;
+    if (alarm.notificationSound != null) {
+      if (alarm.hasCustomSound()) {
+        // カスタムサウンドの場合はファイルパスを使用
+        sound = alarm.notificationSound;
+      } else {
+        // デフォルトサウンドの場合
+        switch (alarm.notificationSound) {
+          case 'デフォルト1':
+            sound = 'sound.mp3';
+            break;
+          case 'デフォルト2':
+            sound = 'sound2.mp3';
+            break;
+          case 'デフォルト3':
+            sound = 'sound3.mp3';
+            break;
+          default:
+            sound = 'sound.mp3';
+        }
+      }
+    } else {
+      sound = 'sound.mp3';
+    }
+
+    // 通知の詳細設定
+    final androidDetails = AndroidNotificationDetails(
+      'alarm_channel',
+      'アラーム通知',
+      channelDescription: 'アラーム通知のためのチャンネル',
+      importance: Importance.max,
+      priority: Priority.high,
+      sound: alarm.hasCustomSound() ? null : RawResourceAndroidNotificationSound(sound!.split('.').first),
+      styleInformation: alarm.hasCustomImage()
+          ? BigPictureStyleInformation(
+        FilePathAndroidBitmap(alarm.notificationImage!),
+        largeIcon: FilePathAndroidBitmap(alarm.notificationImage!),
+      )
+          : null,
+    );
+
+    final iOSDetails = DarwinNotificationDetails(
+      sound: sound,
+      attachments: alarm.hasCustomImage()
+          ? [DarwinNotificationAttachment(alarm.notificationImage!)]
+          : null,
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final notificationDetails = NotificationDetails(
+      android: androidDetails,
+      iOS: iOSDetails,
+    );
+
     await flutterLocalNotificationsPlugin!.zonedSchedule(
-        Randomnumber,
-        'Alarm Clock',
-        "${DateFormat().format(DateTime.now())}",
-        tz.TZDateTime.now(tz.local).add( Duration(milliseconds: newtime)),
-
-        NotificationDetails(
-          iOS: DarwinNotificationDetails(
-            sound: sound,
-          )
-        ),
-        uiLocalNotificationDateInterpretation:
-        UILocalNotificationDateInterpretation.absoluteTime);
+      Randomnumber,
+      alarm.title ?? 'アラーム',
+      alarm.memo ?? "${DateFormat().format(DateTime.now())}",
+      tz.TZDateTime.now(tz.local).add(Duration(milliseconds: newtime)),
+      notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      uiLocalNotificationDateInterpretation:
+      UILocalNotificationDateInterpretation.absoluteTime,
+    );
   }
-
 
 
 

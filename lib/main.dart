@@ -13,6 +13,8 @@ import 'package:timezone/data/latest_all.dart' as tz;
 import 'dart:io' show Platform;
 import 'package:another_flushbar/flushbar.dart';
 import 'package:intl/date_symbol_data_local.dart' show initializeDateFormatting;
+import 'package:flutter_localizations/flutter_localizations.dart';
+
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
@@ -32,13 +34,25 @@ void main() async {
         .requestPermissions(alert: true, badge: true, sound: true);
   }
 
-  runApp(ChangeNotifierProvider(
-    create: (context) => alarmprovider(),
-    child: const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: MyApp(),
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => alarmprovider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        home: MyApp(),
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('ja', 'JP'), // 日本語をサポート
+          Locale('en', 'US'), // 英語もサポート
+        ],
+      )
     ),
-  ));
+  );
+
 }
 
 class MyApp extends StatefulWidget {
